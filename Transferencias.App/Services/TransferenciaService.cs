@@ -167,10 +167,6 @@ namespace Transferencias.App.Services
                 valida = false;
 
             return valida;
-
-
         }
-
-
     }
 }
