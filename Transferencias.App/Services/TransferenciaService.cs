@@ -4,6 +4,8 @@ using System.Text.Json;
 using Transferencias.App.DTOs;
 using Transferencias.Persistence.Entities;
 using Transferencias.Persistence.Repositories;
+using System.Net.Http;
+using System.Net.Http.Headers;
 
 namespace Transferencias.App.Services
 {
@@ -25,12 +27,16 @@ namespace Transferencias.App.Services
         {
             Transferencia transferencia_PRE = _mapper.Map<Transferencia>(request);
             // ToDo: Validar CUIL de Origen y destino
-            // if (ValidaTodoOK){
-            transferencia_PRE.resultado = "FINALIZADA";
-            //} else
-            //transferencia_PRE.resultado = "RECHAZADA";
-            //}
-            var trfJson = JsonSerializer.Serialize(transferencia_PRE);
+            if (Validador(transferencia_PRE.cuilOriginante,transferencia_PRE.cuilDestinatario) )
+            {
+                transferencia_PRE.resultado = "FINALIZADA";
+            }
+            else
+            { 
+                transferencia_PRE.resultado = "RECHAZADA";
+            }
+        
+        var trfJson = JsonSerializer.Serialize(transferencia_PRE);
 
             try
             {
@@ -121,7 +127,50 @@ namespace Transferencias.App.Services
             {
                 _logger.LogError($"Error al modificar la transferencia: {trfPreJson}");
                 throw;
-            }
+            }    
         }
+        public Boolean Validador(string cuilOrigen, string cuilDestino)
+        {
+            int validaO = 0;
+            int validaD = 0;
+            Boolean valida = false;
+
+            using (var client = new HttpClient())
+            {
+                client.BaseAddress = new Uri("https://localhost:7063/api/");
+
+                //HTTP GET
+                var responseTask = client.GetAsync("clientes");
+                responseTask.Wait();
+
+                var result = responseTask.Result;
+                if (result.IsSuccessStatusCode)
+                {
+
+                    var readTask = result.Content.ReadAsAsync<Cliente[]>();
+                    readTask.Wait();
+
+                    var clientes = readTask.Result;
+
+                    foreach (var cliente in clientes)
+                    {
+                        if (cuilOrigen == cliente.cuil)
+                        { validaO = 1; }
+                        if (cuilDestino == cliente.cuil)
+                        { validaD = 1; }    
+                    }
+                }
+            }
+            if (validaO + validaD == 2)
+                valida = true;
+            else
+                valida = false;
+
+            return valida;
+
+
+        }
+
+
     }
 }
