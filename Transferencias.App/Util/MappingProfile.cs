@@ -1,7 +1,6 @@
 ﻿using AutoMapper;
 using Transferencias.App.DTOs;
 using Transferencias.Persistence.Entities;
-using Transferencias.Persistence.Repositories;
 
 namespace Transferencias.App.Util
 {
